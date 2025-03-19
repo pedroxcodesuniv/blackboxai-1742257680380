@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Assistente virtual de saúde para avaliação de sintomas e localização de médicos próximos">
+    <title>Health Chatbot - Assistente de Saúde</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <!-- Production-ready Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?mode=jit"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/custom.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex items-center justify-between">
+            <div class="flex items-center">
+                <i class="fas fa-heartbeat text-red-500 text-2xl mr-2"></i>
+                <h1 class="text-xl font-semibold text-gray-900">Health Chatbot</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-question-circle"></i>
+                </button>
+                <button class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-globe"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Chat Section -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="p-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Consulta Virtual</h2>
+                    <p class="text-sm text-gray-500">Descreva seus sintomas para uma avaliação</p>
+                </div>
+                
+                <!-- Chat Messages -->
+                <div id="chat-messages" class="p-4 h-96 overflow-y-auto space-y-4">
+                    <!-- Welcome Message -->
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-robot text-blue-500 text-xl"></i>
+                        </div>
+                        <div class="ml-3 bg-blue-50 rounded-lg p-3 max-w-3/4">
+                            <p class="text-sm text-gray-900">
+                                Olá! Sou seu assistente virtual de saúde. Como posso ajudar você hoje?
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Input -->
+                <div class="p-4 border-t border-gray-200">
+                    <div class="flex space-x-3">
+                        <input type="text" id="chat-input" 
+                               class="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="Descreva seus sintomas...">
+                        <button id="send-button" 
+                                class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    <div class="mt-2 flex flex-wrap gap-2">
+                        <button class="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full">Dor de cabeça</button>
+                        <button class="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full">Febre</button>
+                        <button class="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full">Tosse</button>
+                        <button class="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full">Gripe</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map Section -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="p-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Médicos Próximos</h2>
+                    <p class="text-sm text-gray-500">Encontre profissionais de saúde na sua região</p>
+                </div>
+                <div id="map" class="h-96"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Emergency Button -->
+    <div class="fixed bottom-4 right-4 z-50">
+        <button onclick="window.location.href='tel:192'" 
+                class="emergency-button bg-red-500 text-white px-6 py-3 rounded-full shadow-lg flex items-center space-x-2 hover:bg-red-600 transition-all">
+            <i class="fas fa-phone-alt"></i>
+            <span>SAMU - 192</span>
+        </button>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-4 left-4 z-50"></div>
+
+    <!-- Scripts -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&libraries=places&callback=initMap" async defer></script>
+    <script src="js/sus-data.js"></script>
+    <script src="js/chatbot.js"></script>
+    <script src="js/maps.js"></script>
+
+    <script>
+        // Toast notification function
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type} message-in`;
+            
+            const icon = document.createElement('i');
+            icon.className = type === 'success' ? 'fas fa-check-circle text-green-500' :
+                           type === 'warning' ? 'fas fa-exclamation-triangle text-yellow-500' :
+                           'fas fa-exclamation-circle text-red-500';
+            
+            const text = document.createElement('span');
+            text.textContent = message;
+            
+            toast.appendChild(icon);
+            toast.appendChild(text);
+            
+            document.getElementById('toast-container').appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s ease-out forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Check if geolocation is available
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    showToast("Localização obtida com sucesso!", "success");
+                },
+                function(error) {
+                    showToast("Não foi possível obter sua localização. Usando localização padrão.", "warning");
+                }
+            );
+        } else {
+            showToast("Seu navegador não suporta geolocalização.", "error");
+        }
+    </script>
+</body>
+</html>
